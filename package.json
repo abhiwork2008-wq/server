@@ -1,0 +1,41 @@
+{
+  "name": "authoritative-game-server",
+  "version": "1.0.0",
+  "description": "Authoritative game server for an asymmetric real-world stealth game with Socket.IO and Redis ephemeral store",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "test:store": "tsx src/test-store.ts",
+    "test:socket": "tsx src/test-socket-integration.ts",
+    "test:location": "tsx src/test-location-multiplexer.ts",
+    "test:edge": "tsx src/test-edge-cases.ts"
+  },
+  "keywords": [
+    "game-server",
+    "socket.io",
+    "redis",
+    "stealth-game",
+    "authoritative"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "ioredis": "^5.5.0",
+    "redis": "^4.7.0",
+    "socket.io": "^4.8.1",
+    "uuid": "^11.1.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.13.4",
+    "@types/uuid": "^10.0.0",
+    "ioredis-mock": "^8.13.1",
+    "socket.io-client": "^4.8.4",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3"
+  }
+}

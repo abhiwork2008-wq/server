@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: scram-game-server
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: USE_REDIS_MOCK
+        value: "true"
+      - key: PORT
+        value: "10000"
