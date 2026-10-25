@@ -25,6 +25,7 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "ioredis": "^5.5.0",
+    "ioredis-mock": "^8.13.1",
     "redis": "^4.7.0",
     "socket.io": "^4.8.1",
     "uuid": "^11.1.0"
@@ -33,7 +34,6 @@
     "@types/express": "^5.0.0",
     "@types/node": "^22.13.4",
     "@types/uuid": "^10.0.0",
-    "ioredis-mock": "^8.13.1",
     "socket.io-client": "^4.8.4",
     "tsx": "^4.19.3",
     "typescript": "^5.7.3"
