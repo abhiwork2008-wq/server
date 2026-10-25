@@ -82,7 +82,7 @@ async function runEdgeCaseTests() {
   const app = express();
   const server = http.createServer(app);
   const io = new SocketIOServer(server, { cors: { origin: '*' } });
-  const mockStore = new RedisRoomStore('mock://');
+  const mockStore = new RedisRoomStore();
 
   registerSocketHandlers(io, mockStore);
 
@@ -140,7 +140,7 @@ async function runEdgeCaseTests() {
   });
 
   room = await mockStore.getRoom(roomId);
-  if (room!.players.size === 2 && room!.players.has(guest1Reconnected.id) && !room!.players.has(guest1.id)) {
+  if (room!.players.size === 2 && room!.players.has(guest1Reconnected.id!) && !room!.players.has(guest1.id!)) {
     console.log('✅ 4A: Reconnected user replaced stale socket without phantom duplication');
   } else {
     throw new Error(`❌ 4A Failed: Room has ${room!.players.size} players, stale socket not purged`);
