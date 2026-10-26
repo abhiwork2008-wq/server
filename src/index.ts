@@ -28,6 +28,104 @@ app.get('/ping', (_req: Request, res: Response) => {
   });
 });
 
+// Match invite deep link landing page
+app.get('/join/:roomId', (req: Request, res: Response) => {
+  const rawRoomId = req.params.roomId;
+  const roomId = (Array.isArray(rawRoomId) ? rawRoomId[0] : String(rawRoomId)).toUpperCase();
+  res.setHeader('Content-Type', 'text/html');
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Join Tapapo Match - Sector ${roomId}</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      background: #0A0F1E;
+      color: #FFFFFF;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 24px;
+      text-align: center;
+    }
+    .badge {
+      background: #E63946;
+      color: #FFF;
+      font-weight: 900;
+      padding: 4px 12px;
+      letter-spacing: 2px;
+      font-size: 11px;
+      margin-bottom: 16px;
+      display: inline-block;
+    }
+    h1 {
+      margin: 0 0 10px 0;
+      font-size: 32px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+    }
+    p {
+      color: #8D99AE;
+      font-size: 14px;
+      max-width: 320px;
+      line-height: 1.5;
+      margin: 0 auto;
+    }
+    .code-box {
+      background: #000000;
+      border: 2px solid #E63946;
+      padding: 16px 28px;
+      font-size: 40px;
+      font-weight: 900;
+      letter-spacing: 6px;
+      color: #FFF;
+      margin: 24px 0;
+      font-family: monospace;
+    }
+    .btn {
+      background: #E63946;
+      color: #FFF;
+      text-decoration: none;
+      font-weight: 900;
+      padding: 16px 32px;
+      font-size: 15px;
+      display: inline-block;
+      letter-spacing: 1.2px;
+      border: 2px solid #000;
+      cursor: pointer;
+    }
+    .subtext {
+      margin-top: 24px;
+      font-size: 12px;
+      color: #6C757D;
+    }
+  </style>
+  <script>
+    // Attempt automatic app launch via custom scheme
+    setTimeout(function() {
+      window.location.href = "tapapo://join/" + encodeURIComponent("${roomId}");
+    }, 150);
+  </script>
+</head>
+<body>
+  <div class="badge">MATCH INVITE</div>
+  <h1>TAPAPO</h1>
+  <p>You've been invited to join an authoritative tactical stealth match.</p>
+  <div class="code-box">${roomId}</div>
+  <a class="btn" href="tapapo://join/${roomId}">LAUNCH TAPAPO APP</a>
+  <div class="subtext">
+    If the app doesn't open automatically, install Tapapo and enter sector code <b>${roomId}</b>.
+  </div>
+</body>
+</html>`);
+});
+
 // Health check endpoint
 app.get('/health', async (_req: Request, res: Response) => {
   res.json({
