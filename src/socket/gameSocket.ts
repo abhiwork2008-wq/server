@@ -250,23 +250,38 @@ export function registerSocketHandlers(io: SocketIOServer, store: RedisRoomStore
           }
         }
 
-        // Corner Case: Purge any stale socket IDs belonging to this user in this room
+        // Corner Case: Purge any stale socket IDs belonging to this user in this room & extract existing state
+        let previousPlayer: Player | undefined;
         for (const [existingSocketId, existingPlayer] of room.players.entries()) {
-          if (existingPlayer.userId === userId && existingSocketId !== socket.id) {
-            room.players.delete(existingSocketId);
-            socketToRoom.delete(existingSocketId);
-            console.log(`[Lobby] Replaced stale socket ${existingSocketId} for user ${userId} in room ${normalizedRoomId}`);
+          if (existingPlayer.userId === userId) {
+            previousPlayer = { ...existingPlayer };
+            if (existingSocketId !== socket.id) {
+              room.players.delete(existingSocketId);
+              socketToRoom.delete(existingSocketId);
+              console.log(`[Lobby] Replaced stale socket ${existingSocketId} for user ${userId} in room ${normalizedRoomId}`);
+            }
+          }
+        }
+
+        const isReconnect = !!previousPlayer;
+        let playerState = PlayerState.ACTIVE;
+        if (isReconnect && previousPlayer) {
+          // If the player was tagged, maintain that state; otherwise restore to ACTIVE
+          if (previousPlayer.state === PlayerState.TAGGED) {
+            playerState = PlayerState.TAGGED;
+          } else {
+            playerState = PlayerState.ACTIVE;
           }
         }
 
         const newPlayer: Player = {
           socketId: socket.id,
           userId,
-          displayName: displayName || `Player-${userId.slice(0, 4)}`,
-          role: role || PlayerRole.RUNNER,
-          state: PlayerState.ACTIVE,
-          lastKnownCoords: null,
-          lastUpdatedAt: null,
+          displayName: displayName || previousPlayer?.displayName || `Player-${userId.slice(0, 4)}`,
+          role: previousPlayer?.role || role || PlayerRole.RUNNER,
+          state: playerState,
+          lastKnownCoords: previousPlayer?.lastKnownCoords || null,
+          lastUpdatedAt: previousPlayer?.lastUpdatedAt || null,
         };
 
         room.players.set(socket.id, newPlayer);
@@ -276,7 +291,7 @@ export function registerSocketHandlers(io: SocketIOServer, store: RedisRoomStore
         socket.join(`room:${normalizedRoomId}`);
         socket.join(normalizedRoomId);
 
-        console.log(`[Lobby] User ${userId} joined room ${normalizedRoomId} as ${newPlayer.role}`);
+        console.log(`[Lobby] User ${userId} joined room ${normalizedRoomId} as ${newPlayer.role}${isReconnect ? ' (RECONNECTED)' : ''}`);
 
         const responsePayload = {
           success: true,
@@ -289,10 +304,19 @@ export function registerSocketHandlers(io: SocketIOServer, store: RedisRoomStore
         };
 
         callback?.(responsePayload);
-        socket.to(`room:${normalizedRoomId}`).emit('player_joined', {
-          roomId: normalizedRoomId,
-          player: newPlayer,
-        });
+
+        if (isReconnect && room.status !== RoomStatus.LOBBY) {
+          // Mid-match reconnection: broadcast player_reconnected
+          io.to(`room:${normalizedRoomId}`).emit('player_reconnected', {
+            roomId: normalizedRoomId,
+            player: newPlayer,
+          });
+        } else {
+          socket.to(`room:${normalizedRoomId}`).emit('player_joined', {
+            roomId: normalizedRoomId,
+            player: newPlayer,
+          });
+        }
       } catch (err: any) {
         console.error('[join_room] Error:', err);
         callback?.({ success: false, error: err.message || 'Failed to join room' });
