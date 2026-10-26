@@ -19,6 +19,15 @@ app.use(express.json());
 // Serve mobile test client
 app.use(express.static(path.join(__dirname, '../public')));
 
+// Lightweight ping endpoint for keepalive and connection testing
+app.get('/ping', (_req: Request, res: Response) => {
+  res.status(200).json({
+    status: 'pong',
+    timestamp: Date.now(),
+    service: 'tapapo-authoritative-server',
+  });
+});
+
 // Health check endpoint
 app.get('/health', async (_req: Request, res: Response) => {
   res.json({
@@ -88,7 +97,24 @@ server.listen(PORT, '0.0.0.0', () => {
   console.log(` 📱 Mobile Phone URL: http://${networkIP}:${PORT}`);
   console.log(` ⏱️  Redis TTL Policy: 10-day TTL (${REDIS_ROOM_TTL_SECONDS}s)`);
   console.log(` 🔍 Health Endpoint:  http://localhost:${PORT}/health`);
+  console.log(` 📡 Ping Endpoint:    http://localhost:${PORT}/ping`);
   console.log(`======================================================\n`);
+
+  // Render free tier keep-alive: ping self every 10 minutes to stay awake during activity
+  const externalUrl = process.env.RENDER_EXTERNAL_URL || process.env.SERVER_URL || 'https://tapapo-server.onrender.com';
+  if (process.env.NODE_ENV === 'production' && externalUrl) {
+    const PING_INTERVAL_MS = 10 * 60 * 1000; // 10 minutes
+    setInterval(async () => {
+      try {
+        const pingUrl = `${externalUrl.replace(/\/$/, '')}/ping`;
+        const res = await fetch(pingUrl);
+        console.log(`[KeepAlive] Self-ping status: ${res.status} at ${new Date().toISOString()}`);
+      } catch (err: any) {
+        console.warn('[KeepAlive] Self-ping warning:', err?.message || err);
+      }
+    }, PING_INTERVAL_MS);
+    console.log(`[KeepAlive] Scheduled self-ping for ${externalUrl} every 10m`);
+  }
 });
 
 // Graceful shutdown
