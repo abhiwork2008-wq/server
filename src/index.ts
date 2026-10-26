@@ -126,6 +126,137 @@ app.get('/join/:roomId', (req: Request, res: Response) => {
 </html>`);
 });
 
+// Public Privacy Policy for Google Play Store compliance
+app.get('/privacy', (_req: Request, res: Response) => {
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
+  res.send(`<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tapapo - Privacy Policy</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0A0F1E;
+      color: #F1F5F9;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.6;
+      padding: 32px 16px;
+    }
+    .container {
+      max-width: 760px;
+      margin: 0 auto;
+      background: #101726;
+      border: 2px solid #334155;
+      padding: 32px;
+    }
+    .badge {
+      display: inline-block;
+      background: #E63946;
+      color: #FFF;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      padding: 4px 10px;
+      margin-bottom: 16px;
+      font-family: monospace;
+    }
+    h1 {
+      font-size: 28px;
+      font-weight: 900;
+      margin-bottom: 6px;
+      letter-spacing: -0.5px;
+    }
+    .subtitle {
+      color: #94A3B8;
+      font-size: 13px;
+      font-family: monospace;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #334155;
+    }
+    h2 {
+      font-size: 18px;
+      color: #F1F5F9;
+      margin: 24px 0 8px 0;
+      font-weight: 800;
+    }
+    p, li {
+      color: #CBD5E1;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+    ul {
+      padding-left: 20px;
+      margin-bottom: 16px;
+    }
+    li { margin-bottom: 6px; }
+    .highlight-box {
+      background: #0D1322;
+      border-left: 4px solid #E63946;
+      padding: 14px 18px;
+      margin: 16px 0;
+    }
+    .highlight-box p {
+      margin: 0;
+      color: #F8FAFC;
+      font-size: 13px;
+    }
+    .contact-card {
+      margin-top: 32px;
+      padding: 16px;
+      background: #090D16;
+      border: 1px solid #334155;
+      font-family: monospace;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="badge">LEGAL & PRIVACY</div>
+    <h1>Tapapo Privacy Policy</h1>
+    <div class="subtitle">Effective Date: October 26, 2026 // Package: com.tapapo.game</div>
+
+    <p>Tapapo ("we", "our") is an authoritative outdoor GPS tactical stealth tag game. We are dedicated to protecting player privacy. This policy outlines our location and data practices in compliance with Google Play Developer Policies.</p>
+
+    <h2>1. Location Data Collection & Purpose</h2>
+    <div class="highlight-box">
+      <p><b>Strict Foreground Use:</b> GPS location is accessed ONLY while a match is actively being played or during play zone setup. Tapapo never collects location data in the background when the game is not actively being played.</p>
+    </div>
+    <p>We request access to precise location (<code>ACCESS_FINE_LOCATION</code>) solely for real-time multiplayer gameplay:</p>
+    <ul>
+      <li><b>5-Meter Tag Detection:</b> Authoritatively confirming when a Hunter is within 5 meters of a Runner to register a tag.</li>
+      <li><b>Geofence Safe Zone:</b> Checking whether Runners are within boundary zones or outside in penalty exposure.</li>
+      <li><b>Radar Sweep Pulses:</b> Revealing approximate ping locations on the tactical radar scope during scheduled scans.</li>
+    </ul>
+
+    <h2>2. Ephemeral In-Memory Processing</h2>
+    <p>All coordinate telemetry is processed in volatile memory on our authoritative server for the active match duration. When a match ends or a lobby is closed, active location trails are immediately purged. We do not store persistent movement histories or sell location tracks to advertisers.</p>
+
+    <h2>3. No Ads, No Third-Party Trackers</h2>
+    <p>Tapapo does not contain advertising SDKs, behavioral analytics trackers, or commercial profiling tools. We do not collect phone numbers, contacts, emails, or personal identifiers.</p>
+
+    <h2>4. Infrastructure & Map Providers</h2>
+    <ul>
+      <li><b>Render.com:</b> Server hosting protected by Transport Layer Security (TLS 1.3 / HTTPS / WSS).</li>
+      <li><b>OpenStreetMap:</b> Standard geographical map tiles cached locally for map display. No user location is shared with map tile providers.</li>
+    </ul>
+
+    <h2>5. Children's Privacy & Permissions</h2>
+    <p>Tapapo is intended for outdoor recreation. We do not knowingly collect personal information from children under 13. Location permissions can be revoked at any time via Android Device Settings.</p>
+
+    <div class="contact-card">
+      <b>CONTACT INQUIRIES:</b><br>
+      Email: support@tapapo.game<br>
+      Website: https://tapapo-server.onrender.com/privacy
+    </div>
+  </div>
+</body>
+</html>`);
+});
+
 // Health check endpoint
 app.get('/health', async (_req: Request, res: Response) => {
   res.json({
