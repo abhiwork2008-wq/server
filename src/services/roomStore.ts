@@ -182,6 +182,81 @@ export class RedisRoomStore {
     await this.saveRoom(room);
     return room;
   }
+
+  // ── USER HANDLE REGISTRY ──
+  private getHandleKey(handle: string): string {
+    const clean = handle.trim().toLowerCase().replace(/^@/, '');
+    return `user:handle:@${clean}`;
+  }
+
+  /**
+   * Checks if a unique user ID handle is available.
+   * If deviceId is provided, returns true if the handle is already registered to that same device.
+   */
+  async checkHandleAvailable(handle: string, deviceId?: string): Promise<boolean> {
+    const key = this.getHandleKey(handle);
+    try {
+      const existing = await this.redis.get(key);
+      if (!existing) return true;
+      const parsed = JSON.parse(existing);
+      if (deviceId && parsed.deviceId === deviceId) {
+        return true; // Already owned by this device
+      }
+      return false;
+    } catch {
+      // Memory fallback
+      const backup = this.memoryBackup.get(key);
+      if (!backup) return true;
+      try {
+        const parsed = JSON.parse(backup.data);
+        if (deviceId && parsed.deviceId === deviceId) return true;
+        return false;
+      } catch {
+        return false;
+      }
+    }
+  }
+
+  /**
+   * Claims a unique user ID handle permanently and binds it to deviceId.
+   */
+  async claimHandle(
+    handle: string,
+    deviceId: string,
+    callsign: string
+  ): Promise<{ success: boolean; error?: string }> {
+    const cleanHandle = handle.trim().toLowerCase().replace(/^@/, '');
+    const normalized = `@${cleanHandle}`;
+    const key = this.getHandleKey(normalized);
+
+    const isAvailable = await this.checkHandleAvailable(normalized, deviceId);
+    if (!isAvailable) {
+      return {
+        success: false,
+        error: `Handle ${normalized} is already taken by another operative.`,
+      };
+    }
+
+    const payload = JSON.stringify({
+      handle: normalized,
+      deviceId,
+      callsign: callsign.trim(),
+      claimedAt: Date.now(),
+    });
+
+    this.memoryBackup.set(key, {
+      data: payload,
+      expiresAt: Date.now() + 365 * 24 * 3600 * 1000, // 1 year
+    });
+
+    try {
+      await this.redis.set(key, payload);
+    } catch (err: any) {
+      console.warn(`[RoomStore] Notice: Redis set returned ${err.message}. Maintained in-memory.`);
+    }
+
+    return { success: true };
+  }
 }
 
 export const roomStore = new RedisRoomStore();

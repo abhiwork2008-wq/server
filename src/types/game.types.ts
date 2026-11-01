@@ -72,6 +72,9 @@ export const DEFAULT_ROOM_CONFIG: Readonly<RoomConfig> = Object.freeze({
   geofenceRadiusMeters: 500, // Default 500m play zone radius
 });
 
+/** Maximum players allowed per room */
+export const MAX_PLAYERS_PER_ROOM = 20;
+
 /** Strict 10-day TTL in seconds for Redis ephemeral keys (lobby self-destruct) */
 export const REDIS_ROOM_TTL_SECONDS = 864000; // 10 days = 10 * 24 * 60 * 60
 

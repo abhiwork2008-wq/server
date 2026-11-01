@@ -28,6 +28,45 @@ app.get('/ping', (_req: Request, res: Response) => {
   });
 });
 
+// Check if a unique user ID handle is available
+app.get('/api/users/check-handle', async (req: Request, res: Response) => {
+  try {
+    const rawHandle = req.query.handle as string;
+    const deviceId = req.query.deviceId as string | undefined;
+    if (!rawHandle) {
+      res.status(400).json({ success: false, error: 'handle parameter is required' });
+      return;
+    }
+    const clean = rawHandle.trim().toLowerCase().replace(/^@/, '');
+    const normalized = `@${clean}`;
+    const available = await roomStore.checkHandleAvailable(normalized, deviceId);
+    res.json({
+      success: true,
+      handle: normalized,
+      available,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// Claim a unique user ID handle permanently and bind it to deviceId
+app.post('/api/users/claim-handle', async (req: Request, res: Response) => {
+  try {
+    const { handle, deviceId, callsign } = req.body;
+    if (!handle || !deviceId) {
+      res.status(400).json({ success: false, error: 'handle and deviceId are required' });
+      return;
+    }
+    const clean = String(handle).trim().toLowerCase().replace(/^@/, '');
+    const normalized = `@${clean}`;
+    const result = await roomStore.claimHandle(normalized, String(deviceId), String(callsign || clean));
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Match invite deep link landing page
 app.get('/join/:roomId', (req: Request, res: Response) => {
   const rawRoomId = req.params.roomId;

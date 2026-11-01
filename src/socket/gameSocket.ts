@@ -6,6 +6,7 @@ import {
   PlayerState, 
   Player, 
   DEFAULT_ROOM_CONFIG, 
+  MAX_PLAYERS_PER_ROOM,
   RoomConfig,
   RunnerSnapshot,
   RunnerPingSnapshotPayload
@@ -37,6 +38,11 @@ export interface SetRoleDto {
 
 export interface StartGameDto {
   roomId: string;
+}
+
+export interface UpdateConfigDto {
+  roomId: string;
+  config: Partial<RoomConfig>;
 }
 
 export interface LocationUpdateDto {
@@ -146,6 +152,40 @@ export function registerSocketHandlers(io: SocketIOServer, store: RedisRoomStore
 
   io.on('connection', (socket: Socket) => {
     console.log(`[Socket.IO] Client connected: ${socket.id}`);
+
+    // Check unique handle availability
+    socket.on('check_handle', async (data: { handle: string; deviceId?: string }, callback?: (res: any) => void) => {
+      try {
+        const { handle, deviceId } = data;
+        if (!handle) {
+          callback?.({ success: false, error: 'handle is required' });
+          return;
+        }
+        const clean = handle.trim().toLowerCase().replace(/^@/, '');
+        const normalized = `@${clean}`;
+        const available = await store.checkHandleAvailable(normalized, deviceId);
+        callback?.({ success: true, handle: normalized, available });
+      } catch (err: any) {
+        callback?.({ success: false, error: err.message });
+      }
+    });
+
+    // Claim unique handle permanently
+    socket.on('claim_handle', async (data: { handle: string; deviceId: string; callsign?: string }, callback?: (res: any) => void) => {
+      try {
+        const { handle, deviceId, callsign } = data;
+        if (!handle || !deviceId) {
+          callback?.({ success: false, error: 'handle and deviceId are required' });
+          return;
+        }
+        const clean = handle.trim().toLowerCase().replace(/^@/, '');
+        const normalized = `@${clean}`;
+        const result = await store.claimHandle(normalized, deviceId, callsign || clean);
+        callback?.(result);
+      } catch (err: any) {
+        callback?.({ success: false, error: err.message });
+      }
+    });
 
     /**
      * CREATE_ROOM:
@@ -264,6 +304,12 @@ export function registerSocketHandlers(io: SocketIOServer, store: RedisRoomStore
         }
 
         const isReconnect = !!previousPlayer;
+        // Enforce 20-player maximum (excluding reconnects)
+        const uniqueUserIds = new Set(Array.from(room.players.values()).map(p => p.userId));
+        if (!uniqueUserIds.has(userId) && room.players.size >= MAX_PLAYERS_PER_ROOM) {
+          callback?.({ success: false, error: `Room is full (max ${MAX_PLAYERS_PER_ROOM} players)` });
+          return;
+        }
         let playerState = PlayerState.ACTIVE;
         if (isReconnect && previousPlayer) {
           // If the player was tagged, maintain that state; otherwise restore to ACTIVE
@@ -315,6 +361,7 @@ export function registerSocketHandlers(io: SocketIOServer, store: RedisRoomStore
           socket.to(`room:${normalizedRoomId}`).emit('player_joined', {
             roomId: normalizedRoomId,
             player: newPlayer,
+            players: Object.fromEntries(room.players),
           });
         }
       } catch (err: any) {
@@ -516,6 +563,58 @@ export function registerSocketHandlers(io: SocketIOServer, store: RedisRoomStore
           },
           ttlSecondsRemaining: ttl,
         });
+      } catch (err: any) {
+        callback?.({ success: false, error: err.message });
+      }
+    });
+
+    /**
+     * UPDATE_CONFIG:
+     * Host-only: updates room config settings while in lobby.
+     * Broadcasts config_updated to all players so they see new settings live.
+     */
+    socket.on('update_config', async (data: UpdateConfigDto, callback?: (res: any) => void) => {
+      try {
+        const { roomId, config } = data;
+        const normalizedRoomId = (roomId || '').trim().toUpperCase();
+        const room = await store.getRoom(normalizedRoomId);
+
+        if (!room) {
+          callback?.({ success: false, error: 'Room not found' });
+          return;
+        }
+
+        // Only host may change config
+        const player = room.players.get(socket.id);
+        if (!player || player.userId !== room.hostId) {
+          callback?.({ success: false, error: 'Only the host can update config' });
+          return;
+        }
+
+        // Only allow config changes while in lobby
+        if (room.status !== RoomStatus.LOBBY) {
+          callback?.({ success: false, error: 'Cannot change settings after game has started' });
+          return;
+        }
+
+        // Merge partial config update
+        room.config = {
+          ...room.config,
+          ...config,
+        };
+        await store.saveRoom(room);
+
+        const configPayload = {
+          roomId: normalizedRoomId,
+          config: room.config,
+        };
+
+        // Broadcast updated config to everyone in the room
+        io.to(`room:${normalizedRoomId}`).emit('config_updated', configPayload);
+        io.to(normalizedRoomId).emit('config_updated', configPayload);
+
+        console.log(`[Lobby] Config updated for room ${normalizedRoomId} by host ${player.displayName}`);
+        callback?.({ success: true, config: room.config });
       } catch (err: any) {
         callback?.({ success: false, error: err.message });
       }
