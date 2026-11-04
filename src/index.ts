@@ -24,7 +24,7 @@ app.get('/ping', (_req: Request, res: Response) => {
   res.status(200).json({
     status: 'pong',
     timestamp: Date.now(),
-    service: 'tapapo-authoritative-server',
+    service: 'topa-authoritative-server',
   });
 });
 
@@ -77,7 +77,7 @@ app.get('/join/:roomId', (req: Request, res: Response) => {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Join Tapapo Match - Sector ${roomId}</title>
+  <title>Join TOPA Match - Sector ${roomId}</title>
   <style>
     * { box-sizing: border-box; }
     body {
@@ -154,12 +154,12 @@ app.get('/join/:roomId', (req: Request, res: Response) => {
 </head>
 <body>
   <div class="badge">MATCH INVITE</div>
-  <h1>TAPAPO</h1>
+  <h1>TOPA</h1>
   <p>You've been invited to join an authoritative tactical stealth match.</p>
   <div class="code-box">${roomId}</div>
-  <a class="btn" href="tapapo://join/${roomId}">LAUNCH TAPAPO APP</a>
+  <a class="btn" href="tapapo://join/${roomId}">LAUNCH TOPA APP</a>
   <div class="subtext">
-    If the app doesn't open automatically, install Tapapo and enter sector code <b>${roomId}</b>.
+    If the app doesn't open automatically, install TOPA and enter sector code <b>${roomId}</b>.
   </div>
 </body>
 </html>`);
