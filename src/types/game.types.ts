@@ -37,6 +37,7 @@ export interface Player {
   isOverspeed?: boolean;
   isOutOfBounds?: boolean;
   distanceFromCenterMeters?: number;
+  consecutiveOverspeedCount?: number;
 }
 
 export interface RunnerSnapshot {
@@ -61,6 +62,8 @@ export interface RoomConfig {
   speedLimitMps: number;
   geofenceRadiusMeters?: number;
   geofenceCenter?: { lat: number; lng: number };
+  pingEnabled?: boolean;
+  zoneShrinkEnabled?: boolean;
 }
 
 /** Default room configuration as specified in authoritative design */
@@ -70,6 +73,8 @@ export const DEFAULT_ROOM_CONFIG: Readonly<RoomConfig> = Object.freeze({
   pingIntervalSec: 180,    // 3 minutes snapshot interval for hunters
   speedLimitMps: 6.7,      // 6.7 m/s (~24 km/h / 15 mph sprint limit)
   geofenceRadiusMeters: 500, // Default 500m play zone radius
+  pingEnabled: true,
+  zoneShrinkEnabled: true,
 });
 
 /** Maximum players allowed per room */

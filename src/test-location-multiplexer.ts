@@ -116,18 +116,26 @@ async function runLocationMultiplexerTest() {
   }
   console.log('✅ Hunter 1 did NOT receive live runner location (correctly hidden)');
 
-  // ── TEST 2: Overspeed Violation (> 6.7 m/s) ──
+  // ── TEST 2: Overspeed Violation (> 6.7 m/s with 2-sample debouncing) ──
   console.log('\n--- TEST 2: Overspeed Violation (> 6.7 m/s) ---');
   const t2 = t1 + 2000; // 2 seconds later
-  // Runner 1 jumps 200 meters in 2 seconds (~100 m/s, vehicle/bike)
-  // 0.0018 deg lat ≈ 200 meters
   runner2ReceivedLocation = null;
   hunter1ReceivedLocation = null;
 
+  // Sample 1: first overspeed reading
+  await new Promise((res) => {
+    runner1.emit('location_update', {
+      roomId,
+      coords: { lat: 18.6270, lng: 73.8122 },
+      timestamp: t2 - 500,
+    }, res);
+  });
+
+  // Sample 2: second consecutive overspeed reading (confirms debounced violation)
   const overspeedRes: any = await new Promise((res) => {
     runner1.emit('location_update', {
       roomId,
-      coords: { lat: 18.62785, lng: 73.8122 },
+      coords: { lat: 18.62885, lng: 73.8122 },
       timestamp: t2,
     }, res);
   });

@@ -62,7 +62,8 @@ export function verifyPlayerSpeed(
   currentCoords: LatLng,
   currentTimestamp: number,
   speedLimitMps: number = 6.7,
-  reportedSpeed?: number
+  reportedSpeed?: number,
+  accuracy?: number
 ): {
   calculatedSpeed: number;
   distanceMeters: number;
@@ -116,10 +117,37 @@ export function verifyPlayerSpeed(
     };
   }
 
-  // Compute speed: distance / time (m/s)
-  const calculatedSpeed = timeDeltaSeconds >= 0.05
-    ? distanceMeters / timeDeltaSeconds
-    : (reportedSpeed ?? (distanceMeters / 0.05));
+  // If low GPS accuracy (> 35m), don't trigger false overspeed from satellite drift
+  if (accuracy && accuracy > 35.0 && distanceMeters < accuracy * 1.5) {
+    const safeSpeed = reportedSpeed ?? 0;
+    return {
+      calculatedSpeed: safeSpeed,
+      distanceMeters,
+      timeDeltaSeconds,
+      isOverspeed: safeSpeed > speedLimitMps,
+    };
+  }
+
+  // For small movements (< 2.5m) within 2 seconds, treat as GPS drift/stationary
+  if (distanceMeters < 2.5 && timeDeltaSeconds <= 2.0 && (!reportedSpeed || reportedSpeed < 0.5)) {
+    return {
+      calculatedSpeed: 0,
+      distanceMeters,
+      timeDeltaSeconds,
+      isOverspeed: false,
+    };
+  }
+
+  // Compute speed: prefer Doppler reported speed if positive and valid;
+  // otherwise calculate from distance / time
+  let calculatedSpeed = reportedSpeed && reportedSpeed > 0
+    ? reportedSpeed
+    : (timeDeltaSeconds >= 0.5 ? distanceMeters / timeDeltaSeconds : (reportedSpeed ?? 0));
+
+  // If calculating from distance / time, ensure we don't divide by tiny fractions of a second
+  if (timeDeltaSeconds < 0.8 && distanceMeters < 8.0) {
+    calculatedSpeed = reportedSpeed ?? (distanceMeters / Math.max(1.0, timeDeltaSeconds));
+  }
 
   const isOverspeed = calculatedSpeed > speedLimitMps;
 

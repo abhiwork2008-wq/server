@@ -463,8 +463,10 @@ export function registerSocketHandlers(io: SocketIOServer, store: RedisRoomStore
         room.startedAt = Date.now();
         await store.saveRoom(room);
 
-        // Start runner ping snapshot scheduler for Hunters
-        ensureSnapshotTimer(normalizedRoomId, io, store, room.config.pingIntervalSec || 180);
+        // Start runner ping snapshot scheduler for Hunters if ping is enabled
+        if (room.config.pingEnabled !== false) {
+          ensureSnapshotTimer(normalizedRoomId, io, store, room.config.pingIntervalSec || 180);
+        }
 
         const playersPayload = Object.fromEntries(room.players);
 
@@ -604,6 +606,11 @@ export function registerSocketHandlers(io: SocketIOServer, store: RedisRoomStore
         };
         await store.saveRoom(room);
 
+        // If pingEnabled changed to false, ensure no snapshot timer is queued
+        if (room.config.pingEnabled === false) {
+          stopSnapshotTimer(normalizedRoomId);
+        }
+
         const configPayload = {
           roomId: normalizedRoomId,
           config: room.config,
@@ -661,10 +668,18 @@ export function registerSocketHandlers(io: SocketIOServer, store: RedisRoomStore
           coords,
           updateTimestamp,
           room.config.speedLimitMps, // 6.7 m/s limit
-          speed
+          speed,
+          accuracy
         );
 
-        const isOverspeed = speedVerification.isOverspeed;
+        const instantOverspeed = speedVerification.isOverspeed;
+        if (instantOverspeed) {
+          player.consecutiveOverspeedCount = (player.consecutiveOverspeedCount || 0) + 1;
+        } else {
+          player.consecutiveOverspeedCount = 0;
+        }
+        // Debounce: require 2 consecutive overspeed updates before triggering authoritative violation
+        const isOverspeed = (player.consecutiveOverspeedCount || 0) >= 2;
 
         // Update player's authoritative position in state
         player.lastKnownCoords = coords;
@@ -672,8 +687,8 @@ export function registerSocketHandlers(io: SocketIOServer, store: RedisRoomStore
         player.speed = speedVerification.calculatedSpeed;
         player.isOverspeed = isOverspeed;
 
-        // Ensure the 180s ping snapshot timer is active if the game is ongoing
-        if (room.status === RoomStatus.ACTIVE || room.status === RoomStatus.HEAD_START) {
+        // Ensure the ping snapshot timer is active if the game is ongoing and ping is enabled
+        if ((room.status === RoomStatus.ACTIVE || room.status === RoomStatus.HEAD_START) && room.config.pingEnabled !== false) {
           ensureSnapshotTimer(normalizedRoomId, io, store, room.config.pingIntervalSec || 180);
         }
 
@@ -862,6 +877,11 @@ export function registerSocketHandlers(io: SocketIOServer, store: RedisRoomStore
     socket.on('trigger_ping_snapshot', async (data: { roomId: string }, callback?: (res: any) => void) => {
       try {
         const normalizedRoomId = (data.roomId || '').trim().toUpperCase();
+        const room = await store.getRoom(normalizedRoomId);
+        if (room && room.config.pingEnabled === false) {
+          callback?.({ success: false, error: 'Ping is disabled in room settings' });
+          return;
+        }
         await emitRunnerPingSnapshot(normalizedRoomId, io, store);
         callback?.({ success: true });
       } catch (err: any) {
@@ -932,6 +952,83 @@ export function registerSocketHandlers(io: SocketIOServer, store: RedisRoomStore
         callback?.({ success: false, error: err.message });
       }
     });
+
+    /**
+     * SEND_RUNNER_CHAT / runner_chat_message:
+     * Authoritative covert team comms for RUNNERS in active gameplay.
+     * Transmits intelligence/messages exclusively to allied RUNNER & SPECTATOR sockets,
+     * maintaining tactical stealth by shielding messages from Hunters.
+     */
+    const handleRunnerChatMessage = async (
+      data: { roomId?: string; message: string; senderCallsign?: string },
+      callback?: (res: any) => void
+    ) => {
+      try {
+        const rawMessage = (data?.message || '').trim();
+        if (!rawMessage) {
+          callback?.({ success: false, error: 'Message cannot be empty' });
+          return;
+        }
+
+        let normalizedRoomId = data?.roomId?.trim().toUpperCase() || socketToRoom.get(socket.id);
+        let room: RoomState | null = null;
+
+        if (normalizedRoomId) {
+          room = await store.getRoom(normalizedRoomId);
+        } else {
+          for (const r of socket.rooms) {
+            if (r.startsWith('room:')) {
+              normalizedRoomId = r.replace('room:', '');
+              room = await store.getRoom(normalizedRoomId);
+              break;
+            }
+          }
+        }
+
+        if (!room || !normalizedRoomId) {
+          callback?.({ success: false, error: 'Room not found' });
+          return;
+        }
+
+        const player = room.players.get(socket.id);
+        const senderDisplayName = data.senderCallsign || player?.displayName || 'Allied Runner';
+        const senderUserId = player?.userId || socket.id;
+
+        const chatPayload = {
+          id: `msg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
+          roomId: normalizedRoomId,
+          senderId: senderUserId,
+          socketId: socket.id,
+          senderName: senderDisplayName,
+          senderRole: player?.role || PlayerRole.RUNNER,
+          message: rawMessage,
+          timestamp: Date.now(),
+        };
+
+        console.log(`[RunnerChat] Room ${normalizedRoomId} | ${senderDisplayName}: ${rawMessage}`);
+
+        // Asymmetric broadcast: Send exclusively to allied RUNNER and SPECTATOR sockets in room
+        let delivered = 0;
+        for (const [targetSocketId, targetPlayer] of room.players.entries()) {
+          if (
+            targetPlayer.role === PlayerRole.RUNNER ||
+            targetPlayer.role === PlayerRole.SPECTATOR ||
+            targetSocketId === socket.id
+          ) {
+            io.to(targetSocketId).emit('runner_chat_message', chatPayload);
+            delivered++;
+          }
+        }
+
+        callback?.({ success: true, message: chatPayload, deliveredCount: delivered });
+      } catch (err: any) {
+        console.error('[send_runner_chat] Error:', err);
+        callback?.({ success: false, error: err.message });
+      }
+    };
+
+    socket.on('send_runner_chat', handleRunnerChatMessage);
+    socket.on('runner_chat_message', handleRunnerChatMessage);
 
     /**
      * LEAVE_ROOM:

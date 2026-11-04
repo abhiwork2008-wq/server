@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TOPA — Privacy Policy</title>
+  <meta name="description" content="Official Privacy Policy for TOPA: The Real World Chase (com.tapapo.game). Full disclosure of location, user data, and privacy protections.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #070A12;
+      --surface: #0E1322;
+      --surface-elevated: #141C33;
+      --border: #1E293B;
+      --border-accent: #FF5500;
+      --orange: #FF5500;
+      --orange-soft: rgba(255, 85, 0, 0.12);
+      --text: #F1F5F9;
+      --text-muted: #94A3B8;
+      --text-dim: #64748B;
+      --green: #10B981;
+      --green-soft: rgba(16, 185, 129, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.7;
+      padding: 24px 16px 80px 16px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    /* Top Brand Header */
+    header {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--orange);
+      padding: 32px 28px;
+      margin-bottom: 24px;
+    }
+
+    .brand-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .brand-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 38px;
+      letter-spacing: 2.5px;
+      color: #FFFFFF;
+      line-height: 1;
+    }
+
+    .badge {
+      display: inline-block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      padding: 5px 12px;
+      background: var(--orange-soft);
+      color: var(--orange);
+      border: 1px solid var(--orange);
+      text-transform: uppercase;
+    }
+
+    .badge.verified {
+      background: var(--green-soft);
+      color: var(--green);
+      border-color: var(--green);
+    }
+
+    .app-meta {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: var(--text-muted);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .app-meta span strong {
+      color: var(--text);
+    }
+
+    /* Key Guarantees Box */
+    .summary-card {
+      background: var(--surface-elevated);
+      border: 1px solid var(--border);
+      padding: 24px;
+      margin-bottom: 32px;
+    }
+
+    .summary-title {
+      font-size: 13px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--orange);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 16px;
+    }
+
+    .summary-item {
+      background: rgba(7, 10, 18, 0.6);
+      border: 1px solid var(--border);
+      padding: 14px 16px;
+    }
+
+    .summary-item h4 {
+      font-size: 14px;
+      color: #FFFFFF;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .summary-item p {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* Content Typography */
+    main {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 40px 32px;
+    }
+
+    h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #FFFFFF;
+      margin: 36px 0 14px 0;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h2:first-of-type {
+      margin-top: 0;
+    }
+
+    h3 {
+      font-size: 16px;
+      color: #E2E8F0;
+      margin: 20px 0 8px 0;
+      font-weight: 600;
+    }
+
+    p {
+      color: #CBD5E1;
+      font-size: 14.5px;
+      margin-bottom: 14px;
+    }
+
+    ul, ol {
+      padding-left: 22px;
+      margin-bottom: 18px;
+    }
+
+    li {
+      color: #CBD5E1;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+
+    li strong {
+      color: #FFFFFF;
+    }
+
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid var(--border);
+      padding: 2px 6px;
+      font-size: 12.5px;
+      color: #F8FAFC;
+    }
+
+    .callout {
+      background: rgba(255, 85, 0, 0.05);
+      border-left: 4px solid var(--orange);
+      padding: 16px 20px;
+      margin: 20px 0;
+    }
+
+    .callout.green {
+      background: rgba(16, 185, 129, 0.05);
+      border-left-color: var(--green);
+    }
+
+    .callout p {
+      margin: 0;
+      font-size: 14px;
+      color: #F8FAFC;
+    }
+
+    .table-container {
+      overflow-x: auto;
+      margin: 20px 0;
+      border: 1px solid var(--border);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13.5px;
+    }
+
+    th {
+      background: #090D17;
+      color: #FFFFFF;
+      font-family: 'JetBrains Mono', monospace;
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border);
+      color: #CBD5E1;
+      vertical-align: top;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    a {
+      color: var(--orange);
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    a:hover {
+      color: #FFAA80;
+    }
+
+    .contact-box {
+      background: #080C16;
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--orange);
+      padding: 20px;
+      margin-top: 30px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+    }
+
+    .contact-box strong {
+      color: #FFFFFF;
+      display: block;
+      margin-bottom: 8px;
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 32px;
+      color: var(--text-dim);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+    }
+
+    footer a {
+      color: var(--text-muted);
+      text-decoration: none;
+      margin: 0 8px;
+    }
+
+    footer a:hover {
+      color: var(--orange);
+    }
+
+    @media (max-width: 640px) {
+      header { padding: 24px 18px; }
+      main { padding: 26px 18px; }
+      .brand-title { font-size: 32px; }
+      h2 { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="brand-row">
+        <h1 class="brand-title">TOPA // PRIVACY POLICY</h1>
+        <span class="badge verified">Google Play Compliant</span>
+      </div>
+      <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 0;">
+        Authoritative GPS Tactical Stealth Tag Mobile Application
+      </p>
+      <div class="app-meta">
+        <span><strong>App Name:</strong> TOPA (The Real World Chase)</span>
+        <span><strong>Package ID:</strong> <code>com.tapapo.game</code></span>
+        <span><strong>Effective Date:</strong> November 4, 2026</span>
+        <span><strong>Version:</strong> 1.0.2</span>
+      </div>
+    </header>
+
+    <div class="summary-card">
+      <div class="summary-title">// EXECUTIVE PRIVACY COMMITMENTS</div>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <h4>🛰️ Foreground GPS Only</h4>
+          <p>Location is accessed strictly while actively playing or setting up a sector. Never tracked in the background when the app is closed.</p>
+        </div>
+        <div class="summary-item">
+          <h4>⚡ Ephemeral In-Memory Processing</h4>
+          <p>Location coordinates are processed in volatile RAM on the server during the match and automatically purged immediately upon match completion.</p>
+        </div>
+        <div class="summary-item">
+          <h4>🚫 Zero Commercial Tracking</h4>
+          <p>No advertising SDKs, behavioral analytics trackers, or commercial profiling. We never sell, rent, or trade your data.</p>
+        </div>
+        <div class="summary-item">
+          <h4>🔒 Encrypted Telemetry</h4>
+          <p>All network traffic between client and authoritative servers is secured via TLS 1.3 / HTTPS and authenticated WebSockets.</p>
+        </div>
+      </div>
+    </div>
+
+    <main>
+      <h2>1. Introduction & Overview</h2>
+      <p>
+        This Privacy Policy explains how <strong>TOPA</strong> ("the App", "we", "us", or "our"), operated by the Topa development team, collects, uses, processes, stores, and protects user information when you install and use the mobile application (package name: <code>com.tapapo.game</code>) and associated authoritative game server infrastructure.
+      </p>
+      <p>
+        TOPA is an outdoor physical multiplayer tactical tag game that bridges real-world athleticism with digital game mechanics. Transparency regarding user privacy and device sensor usage is foundational to our mission. This policy is written in strict compliance with the <strong>Google Play Developer Program Policies</strong>, including the <strong>Google Play User Data Policy</strong>, <strong>Location Data Policy</strong>, and global privacy frameworks (GDPR and COPPA).
+      </p>
+
+      <h2>2. User & Device Data We Collect and Process</h2>
+      <p>
+        We practice data minimization: we collect only data that is strictly required for the core multiplayer functionality of the game.
+      </p>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Data Category</th>
+              <th>Data Elements</th>
+              <th>Primary Purpose</th>
+              <th>Retention Period</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Precise Location (GPS)</strong></td>
+              <td>Latitude, Longitude, Altitude, Speed, Accuracy (<code>ACCESS_FINE_LOCATION</code>, <code>ACCESS_COARSE_LOCATION</code>)</td>
+              <td>Core gameplay: 5m tag detection, geofenced safe zone boundary checks, and periodic radar pulses.</td>
+              <td>Ephemeral in volatile RAM during active match only; purged immediately at match end.</td>
+            </tr>
+            <tr>
+              <td><strong>Player Profile & Callsign</strong></td>
+              <td>Operative callsign (display nickname), unique handle (e.g. <code>@ghost_runner</code>), optional profile photo URL.</td>
+              <td>In-game identification on lobby leaderboards, scoreboard, and post-match tactical cards.</td>
+              <td>Retained on device and server until deleted by the user or upon account deletion request.</td>
+            </tr>
+            <tr>
+              <td><strong>Authentication Credentials</strong></td>
+              <td>Firebase Auth UID, Email address, or salt-hashed local password.</td>
+              <td>Secure operative sign-in and session resumption.</td>
+              <td>Retained as active account data until account deletion is requested.</td>
+            </tr>
+            <tr>
+              <td><strong>Device Identifier</strong></td>
+              <td>Pseudonymous UUID generated locally in App SharedPreferences.</td>
+              <td>Binding operative handle to device and preventing room duplicate abuse / spoofing.</td>
+              <td>Stored locally on device storage; cleared on app uninstall or data clear.</td>
+            </tr>
+            <tr>
+              <td><strong>Age / Birthdate</strong></td>
+              <td>Self-declared birthdate / age (13+ compliance check).</td>
+              <td>Strict verification that player meets the 13+ minimum age requirement under COPPA.</td>
+              <td>Stored locally on device; never shared with third parties or used for profiling.</td>
+            </tr>
+            <tr>
+              <td><strong>In-Game Comms</strong></td>
+              <td>Tactical chat text messages sent between Runners in an active sector.</td>
+              <td>Team coordination during gameplay.</td>
+              <td>Ephemeral; discarded immediately when match room is closed.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>3. In-Depth Location Policy (Google Play Compliance)</h2>
+      <div class="callout">
+        <p>
+          <strong>Notice on Sensitive Location Data:</strong> TOPA accesses precise GPS coordinates strictly because physical spatial proximity is the fundamental mechanic of the game (verifying if a Hunter has sprinted within 5 meters of a Runner to confirm a tag).
+        </p>
+      </div>
+
+      <h3>A. Foreground Use Only</h3>
+      <p>
+        Location services are engaged <strong>only while the app is in the foreground</strong> during an active game session or during initial zone calibration by the match host. TOPA <strong>does NOT</strong> access or monitor background location when the app is minimized, closed, or when you are not in an active match.
+      </p>
+
+      <h3>B. Ephemeral RAM-Only Location Processing</h3>
+      <p>
+        GPS telemetry transmitted by your device is processed by our authoritative game engine strictly in volatile memory (RAM). Coordinates are evaluated in real-time to compute distance matrices and geofence intersections. <strong>We do not save persistent historical GPS tracks to persistent databases, and we do not compile location heatmaps or movement profiles.</strong>
+      </p>
+
+      <h3>C. Real-Time In-Session Sharing</h3>
+      <p>
+        During an active match, your calculated position is broadcast over encrypted WebSockets exclusively to other authorized players joined into the exact same private sector room (e.g., Hunters see radar pings; Runners see teammates). Your coordinates are <strong>never</strong> broadcast to the general public or unauthenticated parties.
+      </p>
+
+      <h2>4. Data We Do NOT Collect</h2>
+      <p>To eliminate ambiguity, TOPA explicitly does <strong>NOT</strong> collect, access, or process:</p>
+      <ul>
+        <li>Your phone contacts, address book, or SMS messages.</li>
+        <li>Your private camera feed or photo gallery (except when you explicitly choose to export/share a post-game tactical score card via the Android system share sheet).</li>
+        <li>Hardware identifiers such as IMEI, MAC Address, or Android Advertising ID (GAID / AAID).</li>
+        <li>Financial, payment, or biometric data.</li>
+      </ul>
+
+      <h2>5. Third-Party Services & Data Sharing Disclosures</h2>
+      <p>
+        TOPA does not sell, lease, or monetize your personal or location data to any third-party advertisers, data aggregators, or marketing brokers. We utilize only industry-standard cloud and map infrastructure to deliver the multiplayer service:
+      </p>
+
+      <ul>
+        <li>
+          <strong>Google Play Services & Firebase (Google LLC):</strong><br>
+          Used for secure user authentication (Firebase Authentication) and app distribution. Google's privacy practices are governed by the <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google Privacy Policy</a>.
+        </li>
+        <li>
+          <strong>Render Cloud Hosting (Render Services, Inc.):</strong><br>
+          Hosts our authoritative multiplayer game server with TLS 1.3 encryption. Telemetry packets pass through secure cloud instances located in standard data centers.
+        </li>
+        <li>
+          <strong>OpenStreetMap Foundation:</strong><br>
+          The in-game map view displays geographic map tiles downloaded from OpenStreetMap public tile servers. No user GPS coordinates, operative handles, or device IDs are transmitted to OpenStreetMap.
+        </li>
+      </ul>
+
+      <h2>6. Data Security Practices</h2>
+      <p>We enforce strict technical safeguards to protect your telemetry and account data:</p>
+      <ul>
+        <li><strong>Transport Layer Security:</strong> All client-server communications use HTTPS and TLS 1.3 / WSS (WebSocket Secure) encryption to prevent packet interception or man-in-the-middle attacks.</li>
+        <li><strong>Isolated Room Scope:</strong> Match data is compartmentalized by unique cryptographic room codes; players in one sector cannot intercept data from another sector.</li>
+        <li><strong>Zero Long-Term Storage of Coordinates:</strong> Once a match is finalized, room records and all associated location points in server memory are automatically destroyed.</li>
+      </ul>
+
+      <h2>7. Children's Privacy (13+ Requirement)</h2>
+      <div class="callout green">
+        <p>
+          <strong>Age Gate (13+):</strong> TOPA is strictly designed and rated for players aged 13 and older. We do not intentionally solicit, collect, or maintain information from children under the age of 13.
+        </p>
+      </div>
+      <p>
+        During onboarding, operative registration includes an age-verification gate requiring players to confirm they are 13 or older. If you believe that a child under 13 has provided personal data to TOPA, please notify us immediately at <a href="mailto:support@tapapo.game">support@tapapo.game</a>, and we will promptly delete all associated records.
+      </p>
+
+      <h2>8. Your Rights, Permission Revocation & Data Deletion</h2>
+      <h3>A. Revoking Location Permissions</h3>
+      <p>
+        You can revoke GPS location permission at any time through your Android operating system settings:
+        <br>
+        <code>Settings ➔ Apps ➔ TOPA ➔ Permissions ➔ Location ➔ Don't allow</code>.
+        <br>
+        <em>Note: Revoking location permissions will prevent participation in active matches since physical tag proximity cannot be verified.</em>
+      </p>
+
+      <h3>B. Account & Data Deletion Request (Right to Erasure)</h3>
+      <p>
+        In accordance with Google Play's Account Deletion Policy and global privacy regulations (GDPR / CCPA), users have the right to request the permanent deletion of their account and all associated profile data.
+      </p>
+      <p>
+        To request deletion of your operative account and data:
+      </p>
+      <ol>
+        <li>Submit a deletion request via our dedicated online portal at: <a href="/data-deletion">https://tapapo-server.onrender.com/data-deletion</a>.</li>
+        <li>Or email us at <a href="mailto:support@tapapo.game?subject=Account%20and%20Data%20Deletion%20Request">support@tapapo.game</a> with your operative callsign or registered email.</li>
+      </ol>
+      <p>
+        All verified account deletion requests are fully executed within <strong>30 days</strong>, removing all authentication records, handles, and profile data from our databases.
+      </p>
+
+      <h2>9. Policy Updates & Notifications</h2>
+      <p>
+        We may update this Privacy Policy from time to time to reflect operational or regulatory improvements. Any revisions will be published immediately on this public web page with an updated "Effective Date". Continued use of the TOPA mobile application after changes are posted constitutes acceptance of the modified policy.
+      </p>
+
+      <h2>10. Developer & Privacy Contact Information</h2>
+      <div class="contact-box">
+        <strong>TOPA DEVELOPER & PRIVACY CONTACT</strong>
+        Development Team: Topa Tactical Tag Studio<br>
+        Application: TOPA (com.tapapo.game)<br>
+        Primary Support Email: <a href="mailto:support@tapapo.game">support@tapapo.game</a><br>
+        Official Policy URL: <a href="https://tapapo-server.onrender.com/privacy">https://tapapo-server.onrender.com/privacy</a><br>
+        Data Deletion Portal: <a href="https://tapapo-server.onrender.com/data-deletion">https://tapapo-server.onrender.com/data-deletion</a>
+      </div>
+    </main>
+
+    <footer>
+      <p>© 2026 TOPA (com.tapapo.game). All rights reserved.</p>
+      <p style="margin-top: 8px;">
+        <a href="/privacy">Privacy Policy</a> •
+        <a href="/terms">Terms of Service</a> •
+        <a href="/data-deletion">Data Deletion</a>
+      </p>
+    </footer>
+  </div>
+</body>
+</html>
+

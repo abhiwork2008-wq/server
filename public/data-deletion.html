@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TOPA — Account & Data Deletion Request</title>
+  <meta name="description" content="Request complete account and personal data deletion for TOPA (com.tapapo.game) in accordance with Google Play developer policies.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=JetBrains+Mono:wght@400;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #070A12;
+      --surface: #0E1322;
+      --border: #1E293B;
+      --orange: #FF5500;
+      --text: #F1F5F9;
+      --text-muted: #94A3B8;
+      --green: #10B981;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.6;
+      padding: 32px 16px 80px 16px;
+    }
+    .container { max-width: 720px; margin: 0 auto; }
+    header {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--orange);
+      padding: 28px 24px;
+      margin-bottom: 24px;
+    }
+    h1 { font-family: 'Bebas Neue', sans-serif; font-size: 36px; letter-spacing: 2px; }
+    main { background: var(--surface); border: 1px solid var(--border); padding: 32px 24px; }
+    h2 { font-size: 19px; color: #FFF; margin: 24px 0 10px 0; }
+    h2:first-of-type { margin-top: 0; }
+    p, li { color: #CBD5E1; font-size: 14.5px; margin-bottom: 12px; }
+    ul, ol { padding-left: 20px; margin-bottom: 18px; }
+    .card {
+      background: #090D17;
+      border: 1px solid var(--border);
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .btn {
+      display: inline-block;
+      background: var(--orange);
+      color: #FFF;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 14px;
+      font-weight: 700;
+      padding: 12px 24px;
+      text-decoration: none;
+      letter-spacing: 1px;
+      margin-top: 10px;
+      border: none;
+      cursor: pointer;
+    }
+    .btn:hover { background: #E04B00; }
+    code { font-family: 'JetBrains Mono', monospace; background: #000; padding: 2px 6px; font-size: 13px; }
+    a { color: var(--orange); }
+    footer { text-align: center; margin-top: 32px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-muted); }
+    footer a { margin: 0 8px; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>TOPA // ACCOUNT & DATA DELETION</h1>
+      <p style="color: var(--text-muted); font-size: 14px; margin-top: 6px;">
+        Google Play User Data & Account Deletion Compliance Portal (App: <code>com.tapapo.game</code>)
+      </p>
+    </header>
+
+    <main>
+      <h2>Request Account & Data Deletion</h2>
+      <p>
+        Under Google Play Developer Policies and applicable data protection regulations (such as GDPR and CCPA), you have the right to request the permanent deletion of your TOPA operative account, personal data, and associated telemetry.
+      </p>
+
+      <div class="card">
+        <h3 style="font-size: 16px; margin-bottom: 8px; color: #FFF;">What Data Is Deleted?</h3>
+        <ul>
+          <li><strong>Authentication Credentials:</strong> Your Firebase Authentication record and email identifier.</li>
+          <li><strong>Operative Profile:</strong> Callsign, unique handle (e.g., <code>@ghost_runner</code>), age/birthdate record, and avatar URL.</li>
+          <li><strong>Device Binding:</strong> The pseudonymous device token linking your profile to our game servers.</li>
+          <li><strong>Note on Location Data:</strong> Because real-time GPS location data is processed strictly in-memory during active matches and discarded upon match completion, there are no persistent location tracks stored in our systems.</li>
+        </ul>
+      </div>
+
+      <h2>How to Submit a Deletion Request</h2>
+      <p>You can request complete account deletion using either of the following methods:</p>
+
+      <ol>
+        <li>
+          <strong>Email Request (Recommended):</strong> Send an email from your registered email address to:
+          <br>
+          <a class="btn" href="mailto:support@tapapo.game?subject=TOPA%20Account%20and%20Data%20Deletion%20Request&body=Please%20delete%20my%20TOPA%20operative%20account%20and%20associated%20data.%0A%0AOperative%20Callsign%20or%20Handle:%20%0ARegistered%20Email:%20">
+            EMAIL DATA DELETION REQUEST
+          </a>
+        </li>
+        <li style="margin-top: 18px;">
+          <strong>Direct Support Dispatch:</strong> If you registered with a manual handle without an email address, email <code>support@tapapo.game</code> providing your unique handle (e.g., <code>@handle</code>) and operative callsign.
+        </li>
+      </ol>
+
+      <h2>Processing Timeline</h2>
+      <p>
+        Upon receiving your request, our engineering team will verify operative ownership and permanently delete all personal data and credentials from active databases and backups within <strong>30 calendar days</strong>. You will receive a confirmation email once the process is complete.
+      </p>
+
+      <h2>In-App Permission Revocation</h2>
+      <p>
+        If you wish to stop sharing location without deleting your operative account, you can revoke location permission directly on your device:
+        <br>
+        <code>Settings ➔ Apps ➔ TOPA ➔ Permissions ➔ Location ➔ Don't allow</code>.
+      </p>
+    </main>
+
+    <footer>
+      <p>© 2026 TOPA (com.tapapo.game)</p>
+      <p style="margin-top: 8px;">
+        <a href="/privacy">Privacy Policy</a> •
+        <a href="/terms">Terms of Service</a> •
+        <a href="/data-deletion">Data Deletion</a>
+      </p>
+    </footer>
+  </div>
+</body>
+</html>
+
