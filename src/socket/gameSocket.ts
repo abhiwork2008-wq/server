@@ -473,10 +473,16 @@ export function registerSocketHandlers(io: SocketIOServer, store: RedisRoomStore
           room.config.win_condition = room.config.win_condition || room.config.winCondition || 'FIRST_TO_FINISH';
           room.config.winCondition = room.config.win_condition;
 
-          const center = room.config.geofenceCenter || { lat: 18.6260, lng: 73.8122 };
-          const radius = room.config.geofenceRadiusMeters || 500.0;
+          const hasZone = room.config.has_zone !== false && room.config.hasZone !== false;
+          room.config.has_zone = hasZone;
+          room.config.hasZone = hasZone;
 
-          // Generate road and public place coordinates within host's geofence
+          const center = room.config.geofenceCenter || { lat: 18.6260, lng: 73.8122 };
+          const radius = hasZone
+            ? (room.config.geofenceRadiusMeters && room.config.geofenceRadiusMeters > 0 ? room.config.geofenceRadiusMeters : 500.0)
+            : 2500.0;
+
+          // Generate road and public place coordinates within host's geofence or open city
           const masterCheckpoints = await generatePublicRoadCheckpoints(center, radius, totalCheckpoints);
           room.config.masterCheckpoints = masterCheckpoints;
 

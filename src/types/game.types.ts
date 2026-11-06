@@ -95,6 +95,8 @@ export interface RoomConfig {
   isSinglePlayer?: boolean;
   shuffle_routes?: boolean;
   shuffleRoutes?: boolean;
+  has_zone?: boolean;
+  hasZone?: boolean;
   masterCheckpoints?: CheckpointCoord[];
 }
 
