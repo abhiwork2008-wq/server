@@ -9,11 +9,20 @@ import {
   MAX_PLAYERS_PER_ROOM,
   RoomConfig,
   RunnerSnapshot,
-  RunnerPingSnapshotPayload
+  RunnerPingSnapshotPayload,
+  GameMode,
+  WaypointWinCondition,
+  CheckpointCoord,
 } from '../types/game.types';
 import { generateRoomCode, isValidRoomCode } from '../utils/codeGen';
 import { RedisRoomStore, roomStore } from '../services/roomStore';
-import { verifyPlayerSpeed, calculateHaversineDistanceMeters, isValidLatLng } from '../utils/haversine';
+import { 
+  verifyPlayerSpeed, 
+  calculateHaversineDistanceMeters, 
+  isValidLatLng,
+  generateRandomGeofenceCoordinates,
+  shuffleArray,
+} from '../utils/haversine';
 
 /**
  * Payload definitions for Socket.IO events
@@ -439,32 +448,74 @@ export function registerSocketHandlers(io: SocketIOServer, store: RedisRoomStore
           return;
         }
 
-        // Role Assignment for match (Among Us style):
-        // If no Hunter is assigned, pick 1 random player to be the Seeker/Hunter!
+        // Check Game Mode (STEALTH vs WAYPOINT_DASH)
+        const isWaypointMode =
+          String(room.config.mode || '').toUpperCase() === 'WAYPOINT_DASH' ||
+          String(room.config.gameMode || '').toUpperCase() === 'WAYPOINT_DASH';
+
         const playerEntries = Array.from(room.players.entries());
-        const hasHunter = playerEntries.some(([_, p]) => p.role === PlayerRole.HUNTER);
-        
-        if (!hasHunter && playerEntries.length > 0) {
-          const randomIndex = Math.floor(Math.random() * playerEntries.length);
-          playerEntries.forEach(([_, p], idx) => {
-            p.role = idx === randomIndex ? PlayerRole.HUNTER : PlayerRole.RUNNER;
-          });
-          console.log(`[Lobby] Among Us Role Roulette: Assigned ${playerEntries[randomIndex][1].displayName} as SEEKER/HUNTER. Remaining ${playerEntries.length - 1} as RUNNERS.`);
-        } else {
-          // If any player is still unassigned (NONE), assign as RUNNER
+
+        if (isWaypointMode) {
+          // WAYPOINT DASH (PHOTO HUNT) LOGIC
+          const totalCheckpoints = Math.max(
+            3,
+            Math.min(15, room.config.total_checkpoints || room.config.totalCheckpoints || 5)
+          );
+          room.config.total_checkpoints = totalCheckpoints;
+          room.config.totalCheckpoints = totalCheckpoints;
+          room.config.win_condition = room.config.win_condition || room.config.winCondition || 'FIRST_TO_FINISH';
+          room.config.winCondition = room.config.win_condition;
+
+          const center = room.config.geofenceCenter || { lat: 18.6260, lng: 73.8122 };
+          const radius = room.config.geofenceRadiusMeters || 500.0;
+
+          // Generate total_checkpoints random GPS coordinates within host's geofence
+          const masterCheckpoints = generateRandomGeofenceCoordinates(center, radius, totalCheckpoints);
+          room.config.masterCheckpoints = masterCheckpoints;
+
+          // For every player, shuffle this array of coordinates independently so everyone has a unique route
           playerEntries.forEach(([_, p]) => {
-            if (p.role === PlayerRole.NONE) {
-              p.role = PlayerRole.RUNNER;
-            }
+            p.role = PlayerRole.RUNNER;
+            const uniqueRoute = shuffleArray(masterCheckpoints).map((cp, idx) => ({
+              ...cp,
+              order: idx + 1,
+            }));
+            p.checkpointQueue = uniqueRoute;
+            p.completedCheckpoints = [];
+            p.currentCheckpoint = uniqueRoute[0] || null;
+            p.finishedAt = null;
           });
+
+          console.log(`[WaypointDash] Initialized ${totalCheckpoints} checkpoints within ${radius}m geofence for room ${normalizedRoomId}. Assigned unique routes to ${playerEntries.length} operatives.`);
+        } else {
+          // Role Assignment for match (Among Us style):
+          // If no Hunter is assigned, pick 1 random player to be the Seeker/Hunter!
+          const hasHunter = playerEntries.some(([_, p]) => p.role === PlayerRole.HUNTER);
+          
+          if (!hasHunter && playerEntries.length > 0) {
+            const randomIndex = Math.floor(Math.random() * playerEntries.length);
+            playerEntries.forEach(([_, p], idx) => {
+              p.role = idx === randomIndex ? PlayerRole.HUNTER : PlayerRole.RUNNER;
+            });
+            console.log(`[Lobby] Among Us Role Roulette: Assigned ${playerEntries[randomIndex][1].displayName} as SEEKER/HUNTER. Remaining ${playerEntries.length - 1} as RUNNERS.`);
+          } else {
+            // If any player is still unassigned (NONE), assign as RUNNER
+            playerEntries.forEach(([_, p]) => {
+              if (p.role === PlayerRole.NONE) {
+                p.role = PlayerRole.RUNNER;
+              }
+            });
+          }
         }
 
-        room.status = room.config.headStartSec > 0 ? RoomStatus.HEAD_START : RoomStatus.ACTIVE;
+        room.status = (isWaypointMode || (room.config.headStartSec || 0) <= 0)
+          ? RoomStatus.ACTIVE 
+          : RoomStatus.HEAD_START;
         room.startedAt = Date.now();
         await store.saveRoom(room);
 
-        // Start runner ping snapshot scheduler for Hunters if ping is enabled
-        if (room.config.pingEnabled !== false) {
+        // Start runner ping snapshot scheduler for Hunters in stealth mode if ping is enabled
+        if (!isWaypointMode && room.config.pingEnabled !== false) {
           ensureSnapshotTimer(normalizedRoomId, io, store, room.config.pingIntervalSec || 180);
         }
 
@@ -489,6 +540,21 @@ export function registerSocketHandlers(io: SocketIOServer, store: RedisRoomStore
           });
         }
 
+        // If WAYPOINT_DASH, dispatch unique initial target coordinates to each player
+        if (isWaypointMode) {
+          for (const [sId, p] of room.players.entries()) {
+            io.to(sId).emit('next_target', {
+              roomId: normalizedRoomId,
+              target: p.currentCheckpoint,
+              queue: p.checkpointQueue,
+              remaining: p.checkpointQueue?.length || 0,
+              total: room.config.total_checkpoints,
+              completedCount: 0,
+              alertMessage: "Points set. Start running.",
+            });
+          }
+        }
+
         callback?.({ success: true, status: room.status, players: playersPayload });
       } catch (err: any) {
         callback?.({ success: false, error: err.message });
@@ -497,6 +563,178 @@ export function registerSocketHandlers(io: SocketIOServer, store: RedisRoomStore
 
     socket.on('start_game', handleStartGame);
     socket.on('startGame', handleStartGame);
+
+    /**
+     * SUBMIT_PHOTO:
+     * Authoritative Waypoint Dash (Photo Hunt) verification listener.
+     * When a player snaps a photo at an active checkpoint:
+     * 1. Pops that coordinate from their queue.
+     * 2. Emits their next target coordinate.
+     * 3. Triggers the win condition if their queue is empty.
+     */
+    socket.on('submit_photo', async (data: { roomId?: string; photo?: string; coords?: { lat: number; lng: number } }, callback?: (res: any) => void) => {
+      try {
+        let normalizedRoomId = data?.roomId?.trim().toUpperCase() || socketToRoom.get(socket.id);
+        if (!normalizedRoomId) {
+          for (const r of socket.rooms) {
+            if (r.startsWith('room:')) {
+              normalizedRoomId = r.replace('room:', '');
+              break;
+            }
+          }
+        }
+
+        if (!normalizedRoomId) {
+          callback?.({ success: false, error: 'Room not found', alertMessage: "Blurry. Try again." });
+          return;
+        }
+
+        const room = await store.getRoom(normalizedRoomId);
+        if (!room) {
+          callback?.({ success: false, error: 'Room expired or not found', alertMessage: "Blurry. Try again." });
+          return;
+        }
+
+        if (room.status !== RoomStatus.ACTIVE) {
+          callback?.({ success: false, error: 'Game is not active', alertMessage: "Blurry. Try again." });
+          return;
+        }
+
+        const player = room.players.get(socket.id);
+        if (!player) {
+          callback?.({ success: false, error: 'Player not found in room', alertMessage: "Blurry. Try again." });
+          return;
+        }
+
+        if (!player.checkpointQueue || player.checkpointQueue.length === 0) {
+          callback?.({ success: false, error: 'All checkpoints already completed', alertMessage: "Done. Go catch your breath." });
+          return;
+        }
+
+        // Pop that coordinate from their queue
+        const completedCheckpoint = player.checkpointQueue.shift()!;
+        if (!player.completedCheckpoints) {
+          player.completedCheckpoints = [];
+        }
+        player.completedCheckpoints.push(completedCheckpoint);
+
+        // Update player's active target
+        const nextTarget = player.checkpointQueue.length > 0 ? player.checkpointQueue[0] : null;
+        player.currentCheckpoint = nextTarget;
+        const isQueueEmpty = player.checkpointQueue.length === 0;
+
+        if (isQueueEmpty) {
+          player.finishedAt = Date.now();
+        }
+
+        await store.saveRoom(room);
+
+        const totalCheckpoints = room.config.total_checkpoints || 
+          (player.completedCheckpoints.length + player.checkpointQueue.length);
+        const remaining = player.checkpointQueue.length;
+
+        // Emit their next target to this player
+        socket.emit('next_target', {
+          roomId: normalizedRoomId,
+          target: nextTarget,
+          remaining,
+          total: totalCheckpoints,
+          completedCount: player.completedCheckpoints.length,
+          alertMessage: isQueueEmpty ? "Done. Go catch your breath." : "Nice shot. Next one.",
+          isFinished: isQueueEmpty,
+        });
+
+        // Emit acceptance confirmation
+        socket.emit('photo_accepted', {
+          success: true,
+          checkpointId: completedCheckpoint.id,
+          completedOrder: completedCheckpoint.order,
+          remaining,
+          alertMessage: "Nice shot. Next one.",
+        });
+
+        // Broadcast progress update to entire room so opponents see live standings
+        io.to(`room:${normalizedRoomId}`).emit('player_progress_updated', {
+          roomId: normalizedRoomId,
+          userId: player.userId,
+          socketId: socket.id,
+          displayName: player.displayName,
+          completedCount: player.completedCheckpoints.length,
+          remaining,
+          isFinished: isQueueEmpty,
+        });
+
+        console.log(`[WaypointDash] Player ${player.displayName} completed checkpoint ${completedCheckpoint.order}. Remaining: ${remaining} in room ${normalizedRoomId}`);
+
+        // Trigger win condition if their queue is empty
+        if (isQueueEmpty) {
+          const winCondition = room.config.win_condition || room.config.winCondition || 'FIRST_TO_FINISH';
+          
+          if (winCondition === 'FIRST_TO_FINISH') {
+            room.status = RoomStatus.ENDED;
+            await store.saveRoom(room);
+
+            const winPayload = {
+              roomId: normalizedRoomId,
+              winnerId: player.userId,
+              winnerName: player.displayName,
+              winCondition: 'FIRST_TO_FINISH',
+              message: "Done. Go catch your breath.",
+              status: RoomStatus.ENDED,
+              completedAt: Date.now(),
+            };
+
+            io.to(`room:${normalizedRoomId}`).emit('game_ended', winPayload);
+            io.to(`room:${normalizedRoomId}`).emit('waypoint_game_over', winPayload);
+            console.log(`[WaypointDash] Match won by ${player.displayName} (FIRST_TO_FINISH) in room ${normalizedRoomId}!`);
+          } else {
+            // TIME_LIMIT: check if all active players finished
+            const allFinished = Array.from(room.players.values()).every(
+              p => (p.checkpointQueue?.length || 0) === 0
+            );
+
+            if (allFinished) {
+              room.status = RoomStatus.ENDED;
+              await store.saveRoom(room);
+
+              const winPayload = {
+                roomId: normalizedRoomId,
+                winnerId: player.userId,
+                winnerName: player.displayName,
+                winCondition: 'TIME_LIMIT',
+                message: "Time's up. Head back.",
+                status: RoomStatus.ENDED,
+                completedAt: Date.now(),
+              };
+
+              io.to(`room:${normalizedRoomId}`).emit('game_ended', winPayload);
+              io.to(`room:${normalizedRoomId}`).emit('waypoint_game_over', winPayload);
+            }
+          }
+        }
+
+        callback?.({
+          success: true,
+          nextTarget,
+          remaining,
+          total: totalCheckpoints,
+          isFinished: isQueueEmpty,
+          alertMessage: isQueueEmpty ? "Done. Go catch your breath." : "Nice shot. Next one.",
+        });
+      } catch (err: any) {
+        console.error('[submit_photo] Error:', err);
+        socket.emit('photo_rejected', {
+          success: false,
+          error: err.message,
+          alertMessage: "Blurry. Try again.",
+        });
+        callback?.({
+          success: false,
+          error: err.message,
+          alertMessage: "Blurry. Try again.",
+        });
+      }
+    });
 
     /**
      * ADD_TEST_PLAYER:

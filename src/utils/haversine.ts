@@ -158,3 +158,53 @@ export function verifyPlayerSpeed(
     isOverspeed,
   };
 }
+
+/**
+ * Generates `count` random GPS coordinates uniformly distributed within a geofence circle.
+ */
+export function generateRandomGeofenceCoordinates(
+  center: LatLng,
+  radiusMeters: number,
+  count: number
+): { id: string; order: number; lat: number; lng: number; name?: string }[] {
+  const checkpoints: { id: string; order: number; lat: number; lng: number; name?: string }[] = [];
+  const safeRadius = Math.max(30, radiusMeters * 0.85);
+
+  for (let i = 0; i < count; i++) {
+    const u = 0.15 + 0.85 * Math.random();
+    const r = safeRadius * Math.sqrt(u);
+    const theta = Math.random() * 2 * Math.PI;
+
+    const dx = r * Math.cos(theta);
+    const dy = r * Math.sin(theta);
+
+    const latRad = (center.lat * Math.PI) / 180;
+    const dLat = dy / 111320.0;
+    const dLng = dx / (111320.0 * Math.cos(latRad));
+
+    const lat = center.lat + dLat;
+    const lng = center.lng + dLng;
+
+    checkpoints.push({
+      id: `cp_${i + 1}_${Math.random().toString(36).substring(2, 6)}`,
+      order: i + 1,
+      lat: parseFloat(lat.toFixed(6)),
+      lng: parseFloat(lng.toFixed(6)),
+      name: `CHECKPOINT ${i + 1}`,
+    });
+  }
+
+  return checkpoints;
+}
+
+/**
+ * Shuffles an array independently using Fisher-Yates algorithm.
+ */
+export function shuffleArray<T>(array: T[]): T[] {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}

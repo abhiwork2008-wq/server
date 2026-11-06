@@ -9,6 +9,21 @@ export enum RoomStatus {
   ENDED = 'ENDED',
 }
 
+export enum GameMode {
+  STEALTH = 'STEALTH',
+  WAYPOINT_DASH = 'WAYPOINT_DASH',
+}
+
+export type WaypointWinCondition = 'TIME_LIMIT' | 'FIRST_TO_FINISH';
+
+export interface CheckpointCoord {
+  id: string;
+  order: number;
+  lat: number;
+  lng: number;
+  name?: string;
+}
+
 export enum PlayerRole {
   HUNTER = 'Hunter',
   RUNNER = 'Runner',
@@ -38,6 +53,11 @@ export interface Player {
   isOutOfBounds?: boolean;
   distanceFromCenterMeters?: number;
   consecutiveOverspeedCount?: number;
+  // Waypoint Dash fields
+  checkpointQueue?: CheckpointCoord[];
+  completedCheckpoints?: CheckpointCoord[];
+  currentCheckpoint?: CheckpointCoord | null;
+  finishedAt?: number | null;
 }
 
 export interface RunnerSnapshot {
@@ -64,6 +84,14 @@ export interface RoomConfig {
   geofenceCenter?: { lat: number; lng: number };
   pingEnabled?: boolean;
   zoneShrinkEnabled?: boolean;
+  // Waypoint Dash parameters
+  mode?: GameMode | 'STEALTH' | 'WAYPOINT_DASH';
+  gameMode?: GameMode | 'STEALTH' | 'WAYPOINT_DASH';
+  total_checkpoints?: number;
+  totalCheckpoints?: number;
+  win_condition?: WaypointWinCondition | 'TIME_LIMIT' | 'FIRST_TO_FINISH';
+  winCondition?: WaypointWinCondition | 'TIME_LIMIT' | 'FIRST_TO_FINISH';
+  masterCheckpoints?: CheckpointCoord[];
 }
 
 /** Default room configuration as specified in authoritative design */
@@ -75,6 +103,9 @@ export const DEFAULT_ROOM_CONFIG: Readonly<RoomConfig> = Object.freeze({
   geofenceRadiusMeters: 500, // Default 500m play zone radius
   pingEnabled: true,
   zoneShrinkEnabled: true,
+  mode: GameMode.STEALTH,
+  total_checkpoints: 5,
+  win_condition: 'FIRST_TO_FINISH',
 });
 
 /** Maximum players allowed per room */

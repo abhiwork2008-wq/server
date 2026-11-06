@@ -4,9 +4,14 @@ import {
   SerializedRoomState, 
   Player, 
   RoomStatus,
+  GameMode,
+  WaypointWinCondition,
+  CheckpointCoord,
   REDIS_ROOM_TTL_SECONDS 
 } from '../types/game.types';
 import { getRedisClient } from './redis';
+
+export { GameMode, WaypointWinCondition, CheckpointCoord };
 
 const ROOM_KEY_PREFIX = 'room:';
 
@@ -179,6 +184,29 @@ export class RedisRoomStore {
     if (status === RoomStatus.ACTIVE && !room.startedAt) {
       room.startedAt = Date.now();
     }
+    await this.saveRoom(room);
+    return room;
+  }
+
+  /**
+   * Updates game mode and host parameters for WAYPOINT_DASH or STEALTH.
+   */
+  async updateGameMode(
+    roomId: string,
+    mode: GameMode | 'STEALTH' | 'WAYPOINT_DASH',
+    totalCheckpoints: number = 5,
+    winCondition: WaypointWinCondition = 'FIRST_TO_FINISH'
+  ): Promise<RoomState | null> {
+    const room = await this.getRoom(roomId);
+    if (!room) return null;
+
+    room.config.mode = mode;
+    room.config.gameMode = mode;
+    room.config.total_checkpoints = totalCheckpoints;
+    room.config.totalCheckpoints = totalCheckpoints;
+    room.config.win_condition = winCondition;
+    room.config.winCondition = winCondition;
+
     await this.saveRoom(room);
     return room;
   }
