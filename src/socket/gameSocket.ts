@@ -466,7 +466,7 @@ export function registerSocketHandlers(io: SocketIOServer, store: RedisRoomStore
           // WAYPOINT DASH (PHOTO HUNT) LOGIC
           const totalCheckpoints = Math.max(
             3,
-            Math.min(15, room.config.total_checkpoints || room.config.totalCheckpoints || 5)
+            Math.min(20, room.config.total_checkpoints || room.config.totalCheckpoints || 5)
           );
           room.config.total_checkpoints = totalCheckpoints;
           room.config.totalCheckpoints = totalCheckpoints;
