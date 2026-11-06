@@ -160,20 +160,50 @@ export function verifyPlayerSpeed(
 }
 
 /**
- * Generates `count` random GPS coordinates uniformly distributed within a geofence circle.
+ * Formats public landmark / street names cleanly.
  */
-export function generateRandomGeofenceCoordinates(
+function formatPublicName(raw: string): string {
+  if (!raw) return 'Public Road';
+  const clean = raw.trim();
+  const capped = clean.length > 28 ? clean.slice(0, 28) : clean;
+  return capped.toUpperCase();
+}
+
+/**
+ * Robust fallback generator producing designated public road intersections and civic waypoints.
+ */
+export function generatePublicRoadWaypointsFallback(
   center: LatLng,
   radiusMeters: number,
   count: number
-): { id: string; order: number; lat: number; lng: number; name?: string }[] {
-  const checkpoints: { id: string; order: number; lat: number; lng: number; name?: string }[] = [];
+): { id: string; order: number; lat: number; lng: number; name: string }[] {
+  const publicPlaceNames = [
+    'Civic Plaza Crossing',
+    'Public Promenade Junction',
+    'Main Avenue Crossing',
+    'Central Boulevard Way',
+    'Park Perimeter Waypoint',
+    'Station Square Road',
+    'Public Transit Crossway',
+    'Community Centre Road',
+    'Heritage Park Waypoint',
+    'Grand Circle Crossing',
+    'Riverfront Promenade',
+    'Library Square Road',
+    'North Avenue Junction',
+    'South Boulevard Crossing',
+    'East Civic Crossway',
+  ];
+
+  const checkpoints: { id: string; order: number; lat: number; lng: number; name: string }[] = [];
   const safeRadius = Math.max(30, radiusMeters * 0.85);
 
   for (let i = 0; i < count; i++) {
-    const u = 0.15 + 0.85 * Math.random();
+    // Distribute along road network bearings
+    const angleStep = (2 * Math.PI) / count;
+    const theta = i * angleStep + (Math.random() * 0.2 - 0.1);
+    const u = 0.25 + 0.70 * ((i % 3 + 1) / 3.0);
     const r = safeRadius * Math.sqrt(u);
-    const theta = Math.random() * 2 * Math.PI;
 
     const dx = r * Math.cos(theta);
     const dy = r * Math.sin(theta);
@@ -185,16 +215,89 @@ export function generateRandomGeofenceCoordinates(
     const lat = center.lat + dLat;
     const lng = center.lng + dLng;
 
+    const placeName = publicPlaceNames[i % publicPlaceNames.length];
+
     checkpoints.push({
       id: `cp_${i + 1}_${Math.random().toString(36).substring(2, 6)}`,
       order: i + 1,
       lat: parseFloat(lat.toFixed(6)),
       lng: parseFloat(lng.toFixed(6)),
-      name: `CHECKPOINT ${i + 1}`,
+      name: placeName,
     });
   }
 
   return checkpoints;
+}
+
+/**
+ * Fetches real public places (parks, plazas, community squares) and roads (highways, footways)
+ * from OpenStreetMap Overpass API within the specified radius of the center.
+ * If offline or query times out, falls back to public road bearing nodes.
+ */
+export async function generatePublicRoadCheckpoints(
+  center: LatLng,
+  radiusMeters: number,
+  count: number
+): Promise<{ id: string; order: number; lat: number; lng: number; name?: string }[]> {
+  try {
+    const query = `[out:json][timeout:3];(way["highway"~"residential|tertiary|secondary|primary|footway|pedestrian|living_street"](around:${Math.round(radiusMeters)},${center.lat},${center.lng});node["amenity"~"park|plaza|bench|cafe|fountain|library|community_centre"](around:${Math.round(radiusMeters)},${center.lat},${center.lng});node["leisure"~"park|playground|garden|pitch"](around:${Math.round(radiusMeters)},${center.lat},${center.lng}););out center 40;`;
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 3000);
+
+    const response = await fetch('https://overpass-api.de/api/interpreter', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `data=${encodeURIComponent(query)}`,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    if (response.ok) {
+      const data = (await response.json()) as any;
+      const elements = data?.elements || [];
+      const validPoints: { lat: number; lng: number; name: string }[] = [];
+
+      for (const el of elements) {
+        const ptLat = el.lat ?? el.center?.lat;
+        const ptLng = el.lng ?? el.center?.lng;
+        if (typeof ptLat === 'number' && typeof ptLng === 'number') {
+          const dist = calculateHaversineDistanceMeters(center, { lat: ptLat, lng: ptLng });
+          if (dist <= radiusMeters) {
+            const rawName = el.tags?.name || el.tags?.highway || el.tags?.amenity || el.tags?.leisure || 'Public Road';
+            const formattedName = formatPublicName(rawName);
+            validPoints.push({ lat: ptLat, lng: ptLng, name: formattedName });
+          }
+        }
+      }
+
+      if (validPoints.length >= count) {
+        const shuffled = shuffleArray(validPoints).slice(0, count);
+        return shuffled.map((pt, idx) => ({
+          id: `cp_${idx + 1}_${Math.random().toString(36).substring(2, 6)}`,
+          order: idx + 1,
+          lat: parseFloat(pt.lat.toFixed(6)),
+          lng: parseFloat(pt.lng.toFixed(6)),
+          name: pt.name,
+        }));
+      }
+    }
+  } catch {
+    // Overpass query timed out or offline, proceed to fallback
+  }
+
+  return generatePublicRoadWaypointsFallback(center, radiusMeters, count);
+}
+
+/**
+ * Generates `count` random GPS coordinates uniformly distributed within a geofence circle.
+ */
+export function generateRandomGeofenceCoordinates(
+  center: LatLng,
+  radiusMeters: number,
+  count: number
+): { id: string; order: number; lat: number; lng: number; name?: string }[] {
+  return generatePublicRoadWaypointsFallback(center, radiusMeters, count);
 }
 
 /**

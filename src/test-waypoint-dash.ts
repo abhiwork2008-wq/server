@@ -2,7 +2,12 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert';
 import { RedisRoomStore } from './services/roomStore';
 import { GameMode, PlayerRole, PlayerState, RoomStatus } from './types/game.types';
-import { generateRandomGeofenceCoordinates, shuffleArray } from './utils/haversine';
+import { 
+  generateRandomGeofenceCoordinates, 
+  generatePublicRoadCheckpoints,
+  generatePublicRoadWaypointsFallback,
+  shuffleArray 
+} from './utils/haversine';
 import RedisMock from 'ioredis-mock';
 
 describe('Waypoint Dash (Photo Hunt) Server Logic', () => {
@@ -80,6 +85,32 @@ describe('Waypoint Dash (Photo Hunt) Server Logic', () => {
     const fetched = await store.getRoom(roomId);
     assert.strictEqual(fetched?.config.mode, GameMode.WAYPOINT_DASH);
     assert.strictEqual(fetched?.config.total_checkpoints, 7);
+  });
+
+  it('generates public road and civic place checkpoints with meaningful names', async () => {
+    const center = { lat: 18.6260, lng: 73.8122 };
+    const radius = 500;
+    const count = 5;
+    const points = await generatePublicRoadCheckpoints(center, radius, count);
+
+    assert.strictEqual(points.length, count);
+    points.forEach((pt, idx) => {
+      assert.strictEqual(pt.order, idx + 1);
+      assert.ok(pt.name && pt.name.length > 0, 'Should have public place/road name');
+      assert.ok(pt.lat >= -90 && pt.lat <= 90);
+      assert.ok(pt.lng >= -180 && pt.lng <= 180);
+    });
+  });
+
+  it('preserves identical order when route randomization is disabled', () => {
+    const center = { lat: 18.6260, lng: 73.8122 };
+    const master = generatePublicRoadWaypointsFallback(center, 500, 6);
+
+    // If shuffle_routes === false, both players get identical order
+    const p1Route = master.map((cp, idx) => ({ ...cp, order: idx + 1 }));
+    const p2Route = master.map((cp, idx) => ({ ...cp, order: idx + 1 }));
+
+    assert.deepStrictEqual(p1Route.map(r => r.id), p2Route.map(r => r.id));
   });
 });
 

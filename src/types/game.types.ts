@@ -91,6 +91,10 @@ export interface RoomConfig {
   totalCheckpoints?: number;
   win_condition?: WaypointWinCondition | 'TIME_LIMIT' | 'FIRST_TO_FINISH';
   winCondition?: WaypointWinCondition | 'TIME_LIMIT' | 'FIRST_TO_FINISH';
+  is_single_player?: boolean;
+  isSinglePlayer?: boolean;
+  shuffle_routes?: boolean;
+  shuffleRoutes?: boolean;
   masterCheckpoints?: CheckpointCoord[];
 }
 
@@ -106,6 +110,8 @@ export const DEFAULT_ROOM_CONFIG: Readonly<RoomConfig> = Object.freeze({
   mode: GameMode.STEALTH,
   total_checkpoints: 5,
   win_condition: 'FIRST_TO_FINISH',
+  is_single_player: false,
+  shuffle_routes: true,
 });
 
 /** Maximum players allowed per room */

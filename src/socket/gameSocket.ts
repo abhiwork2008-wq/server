@@ -21,6 +21,7 @@ import {
   calculateHaversineDistanceMeters, 
   isValidLatLng,
   generateRandomGeofenceCoordinates,
+  generatePublicRoadCheckpoints,
   shuffleArray,
 } from '../utils/haversine';
 
@@ -149,6 +150,12 @@ export function stopSnapshotTimer(roomId: string): void {
     clearInterval(timer);
     snapshotTimers.delete(normalizedId);
     console.log(`[Snapshot Timer] Stopped snapshot timer for room ${normalizedId}`);
+  }
+  const matchTimer = snapshotTimers.get(`match_${normalizedId}`);
+  if (matchTimer) {
+    clearTimeout(matchTimer);
+    snapshotTimers.delete(`match_${normalizedId}`);
+    console.log(`[Snapshot Timer] Stopped match timer for room ${normalizedId}`);
   }
 }
 
@@ -469,24 +476,66 @@ export function registerSocketHandlers(io: SocketIOServer, store: RedisRoomStore
           const center = room.config.geofenceCenter || { lat: 18.6260, lng: 73.8122 };
           const radius = room.config.geofenceRadiusMeters || 500.0;
 
-          // Generate total_checkpoints random GPS coordinates within host's geofence
-          const masterCheckpoints = generateRandomGeofenceCoordinates(center, radius, totalCheckpoints);
+          // Generate road and public place coordinates within host's geofence
+          const masterCheckpoints = await generatePublicRoadCheckpoints(center, radius, totalCheckpoints);
           room.config.masterCheckpoints = masterCheckpoints;
 
-          // For every player, shuffle this array of coordinates independently so everyone has a unique route
+          // Check if randomized routes are enabled (default true, configurable in lobby advanced settings)
+          const isRandomized = room.config.shuffle_routes !== false && room.config.shuffleRoutes !== false;
+
           playerEntries.forEach(([_, p]) => {
             p.role = PlayerRole.RUNNER;
-            const uniqueRoute = shuffleArray(masterCheckpoints).map((cp, idx) => ({
-              ...cp,
-              order: idx + 1,
-            }));
-            p.checkpointQueue = uniqueRoute;
+            const assignedRoute = isRandomized
+              ? shuffleArray(masterCheckpoints).map((cp, idx) => ({ ...cp, order: idx + 1 }))
+              : masterCheckpoints.map((cp, idx) => ({ ...cp, order: idx + 1 }));
+            p.checkpointQueue = assignedRoute;
             p.completedCheckpoints = [];
-            p.currentCheckpoint = uniqueRoute[0] || null;
+            p.currentCheckpoint = assignedRoute[0] || null;
             p.finishedAt = null;
           });
 
-          console.log(`[WaypointDash] Initialized ${totalCheckpoints} checkpoints within ${radius}m geofence for room ${normalizedRoomId}. Assigned unique routes to ${playerEntries.length} operatives.`);
+          console.log(`[WaypointDash] Initialized ${totalCheckpoints} road/public checkpoints within ${radius}m geofence for room ${normalizedRoomId}. Route mode: ${isRandomized ? 'RANDOMIZED' : 'IDENTICAL'}. Assigned to ${playerEntries.length} operative(s).`);
+
+          // If win condition is TIME_LIMIT, register authoritative match countdown timer
+          if (room.config.win_condition === 'TIME_LIMIT' || room.config.winCondition === 'TIME_LIMIT') {
+            const durationSec = room.config.roundDurationSec || 900;
+            const durationMs = Math.max(10, durationSec) * 1000;
+            const matchTimer = setTimeout(async () => {
+              const currentRoom = await store.getRoom(normalizedRoomId);
+              if (!currentRoom || currentRoom.status === RoomStatus.ENDED) return;
+
+              // Find player with the highest amount of completed checkpoints
+              let bestPlayer: Player | null = null;
+              let maxCompleted = -1;
+              for (const p of currentRoom.players.values()) {
+                const count = p.completedCheckpoints?.length || 0;
+                if (count > maxCompleted) {
+                  maxCompleted = count;
+                  bestPlayer = p;
+                }
+              }
+
+              currentRoom.status = RoomStatus.ENDED;
+              await store.saveRoom(currentRoom);
+              stopSnapshotTimer(normalizedRoomId);
+
+              const winPayload = {
+                roomId: normalizedRoomId,
+                winnerId: bestPlayer?.userId || '',
+                winnerName: bestPlayer?.displayName || 'Top Operative',
+                winCondition: 'TIME_LIMIT',
+                message: "Time's up. Head back.",
+                status: RoomStatus.ENDED,
+                completedAt: Date.now(),
+              };
+
+              io.to(`room:${normalizedRoomId}`).emit('game_ended', winPayload);
+              io.to(`room:${normalizedRoomId}`).emit('waypoint_game_over', winPayload);
+              console.log(`[WaypointDash] TIME_LIMIT expired in room ${normalizedRoomId}. Winner: ${bestPlayer?.displayName} with ${maxCompleted} checkpoints`);
+            }, durationMs);
+
+            snapshotTimers.set(`match_${normalizedRoomId}`, matchTimer);
+          }
         } else {
           // Role Assignment for match (Among Us style):
           // If no Hunter is assigned, pick 1 random player to be the Seeker/Hunter!
@@ -673,6 +722,7 @@ export function registerSocketHandlers(io: SocketIOServer, store: RedisRoomStore
           if (winCondition === 'FIRST_TO_FINISH') {
             room.status = RoomStatus.ENDED;
             await store.saveRoom(room);
+            stopSnapshotTimer(normalizedRoomId);
 
             const winPayload = {
               roomId: normalizedRoomId,
@@ -696,6 +746,7 @@ export function registerSocketHandlers(io: SocketIOServer, store: RedisRoomStore
             if (allFinished) {
               room.status = RoomStatus.ENDED;
               await store.saveRoom(room);
+              stopSnapshotTimer(normalizedRoomId);
 
               const winPayload = {
                 roomId: normalizedRoomId,
