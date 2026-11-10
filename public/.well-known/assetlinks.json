@@ -1,0 +1,17 @@
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.tapapo.game",
+      "sha256_cert_fingerprints": [
+        "34:3B:34:0C:10:76:1D:B9:C3:05:82:6A:C2:FF:D7:88:66:52:15:1F:3E:3B:79:13:72:A7:62:94:B7:DD:BB:0B",
+        "3F:B8:9F:91:BF:16:45:03:A4:C0:EB:94:CD:C2:0B:68:9B:72:FC:22:BA:AD:7E:DA:8F:55:C0:96:10:90:86:BD",
+        "35:F2:EC:02:79:A0:E3:05:9C:2B:D2:1C:75:52:BB:56:D6:7A:55:5D:BB:75:E4:6E:D3:20:21:64:E2:19:97:3C",
+        "75:1D:50:54:4F:FF:86:D8:B9:C9:2D:59:93:96:EC:FA:3C:2B:98:2C:45:4F:98:40:05:D7:7E:5B:14:81:98:C1"
+      ]
+    }
+  }
+]

@@ -16,8 +16,14 @@ const app = express();
 const PORT = parseInt(process.env.PORT || '4000', 10);
 
 app.use(express.json());
-// Serve mobile test client
-app.use(express.static(path.join(__dirname, '../public')));
+// Serve mobile test client and static files (allow dotfiles for /.well-known)
+app.use(express.static(path.join(__dirname, '../public'), { dotfiles: 'allow' }));
+
+// Dedicated endpoint for Android App Links verification (assetlinks.json)
+app.get('/.well-known/assetlinks.json', (_req: Request, res: Response) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.sendFile(path.resolve(__dirname, '../public/.well-known/assetlinks.json'));
+});
 
 // Lightweight ping endpoint for keepalive and connection testing
 app.get('/ping', (_req: Request, res: Response) => {
